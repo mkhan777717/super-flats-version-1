@@ -1,96 +1,76 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { PropertyDB } from "@/lib/mysql"
+import { type NextRequest, NextResponse } from "next/server";
+import { PropertyDB } from "@/lib/mysql";
 
-// GET /api/properties/[id] - Get property by ID
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const property = await PropertyDB.getPropertyById(Number.parseInt(params.id))
+    const p = await PropertyDB.getPropertyById(Number(params.id));
+    if (!p) return NextResponse.json({ error: "Property not found" }, { status: 404 });
 
-    if (!property) {
-      return NextResponse.json({ error: "Property not found" }, { status: 404 })
-    }
-
-    // Transform database format to frontend format
-    const transformedProperty = {
-      id: property.id.toString(),
-      name: property.title,
-      location: property.location,
-      bhk: property.bhk_type,
-      rent: property.rent,
-      deposit: property.deposit,
-      availability:
-        property.availability_status === "available"
-          ? "Available"
-          : property.availability_status === "occupied"
-            ? "Rented"
-            : "Maintenance",
-      images: property.images || [],
-      createdAt: property.created_at ? new Date(property.created_at).toISOString().split("T")[0] : "",
-      description: property.description,
-      amenities: property.amenities || [],
-      area: property.area,
-      furnished:
-        property.furnished_status === "fully_furnished"
-          ? "Fully Furnished"
-          : property.furnished_status === "semi_furnished"
-            ? "Semi Furnished"
-            : "Unfurnished",
-      parking: property.parking,
-      contact: property.contact_phone,
-    }
-
-    return NextResponse.json(transformedProperty)
-  } catch (error) {
-    console.error("Error fetching property:", error)
-    return NextResponse.json({ error: "Failed to fetch property" }, { status: 500 })
+    const transformed = {
+      id: String(p.id),
+      name: p.title,
+      location: p.location,
+      bhk: p.bhk_type,
+      rent: Number(p.rent),
+      deposit: Number(p.deposit),
+      availability: p.availability_status === "available" ? "Available" : p.availability_status === "occupied" ? "Rented" : "Maintenance",
+      images: p.images || [],
+      createdAt: p.created_at ? new Date(p.created_at).toISOString().split("T")[0] : "",
+      description: p.description,
+      amenities: p.amenities || [],
+      area: Number(p.area || 0),
+      furnished: p.furnished_status === "fully_furnished" ? "Fully Furnished" : p.furnished_status === "semi_furnished" ? "Semi Furnished" : "Unfurnished",
+      parking: !!p.parking,
+      contact: p.contact_phone,
+    };
+    return NextResponse.json(transformed);
+  } catch (e) {
+    console.error("GET /api/properties/[id] error:", e);
+    return NextResponse.json({ error: "Failed to fetch property" }, { status: 500 });
   }
 }
 
-// PUT /api/properties/[id] - Update property
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const body = await request.json()
-
-    // Transform frontend format to database format
-    const propertyData = {
-      title: body.name,
-      description: body.description,
+    const b = await request.json();
+    await PropertyDB.updateProperty(Number(params.id), {
+      title: b.name,
+      description: b.description,
       property_type: "apartment",
-      bhk_type: body.bhk,
-      rent: body.rent,
-      deposit: body.deposit,
-      location: body.location,
-      area: body.area,
-      furnished_status:
-        body.furnished === "Fully Furnished"
-          ? "fully_furnished"
-          : body.furnished === "Semi Furnished"
-            ? "semi_furnished"
-            : "unfurnished",
-      parking: body.parking || false,
-      parking_type: body.parking ? "covered" : "none",
-      contact_phone: body.contact,
-      images: body.images || [],
-      amenities: body.amenities || [],
-    }
-
-    await PropertyDB.updateProperty(Number.parseInt(params.id), propertyData)
-
-    return NextResponse.json({ message: "Property updated successfully" })
-  } catch (error) {
-    console.error("Error updating property:", error)
-    return NextResponse.json({ error: "Failed to update property" }, { status: 500 })
+      bhk_type: b.bhk,
+      rent: b.rent,
+      deposit: b.deposit,
+      location: b.location,
+      area: b.area,
+      furnished_status: b.furnished === "Fully Furnished" ? "fully_furnished" : b.furnished === "Semi Furnished" ? "semi_furnished" : "unfurnished",
+      parking: !!b.parking,
+      parking_type: b.parking ? "covered" : "none",
+      contact_name: b.contact_name,
+      contact_phone: b.contact,
+      contact_email: b.contact_email,
+      images: b.images || [],
+      amenities: b.amenities || [],
+      available_from: b.available_from,
+      floor_number: b.floor_number,
+      total_floors: b.total_floors,
+      age_of_property: b.age_of_property,
+      facing: b.facing,
+      balcony: b.balcony,
+      bathroom: b.bathroom,
+    });
+    return NextResponse.json({ message: "Property updated successfully" });
+  } catch (e) {
+    console.error("PUT /api/properties/[id] error:", e);
+    return NextResponse.json({ error: "Failed to update property" }, { status: 500 });
   }
 }
 
-// DELETE /api/properties/[id] - Delete property
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await PropertyDB.deleteProperty(Number.parseInt(params.id))
-
-    return NextResponse.json({ message: "Property deleted successfully" })
-  } catch (error) {
-    console.error("Error deleting property:", error)
-    return NextResponse.json({ error: "Failed to delete property" }, { status: 500 })
+    await PropertyDB.deleteProperty(Number(params.id));
+    return NextResponse.json({ message: "Property deleted successfully" });
+  } catch (e) {
+    console.error("DELETE /api/properties/[id] error:", e);
+    return NextResponse.json({ error: "Failed to delete property" }, { status: 500 });
   }
 }
