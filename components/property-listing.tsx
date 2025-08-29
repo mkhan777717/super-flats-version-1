@@ -102,9 +102,9 @@ export function PropertyListing() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-6">
-          <aside className="w-80 flex-shrink-0">
+          {/* <aside className="w-80 flex-shrink-0">
             <PropertyFiltersSidebar onApply={applyFilters} maxRent={Math.max(...propsData.map(p => Number(p.rent) || 0), 500000)} />
-          </aside>
+          </aside> */}
 
           <section className="flex-1">
             <div className="mb-4">
