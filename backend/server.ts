@@ -10,6 +10,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get("/", (req: Request, res: Response) => {
+  res.send(
+    "✅ SuperFlats Backend is running. Use /api/properties or /api/health"
+  );
+});
+
 // ✅ Health check with typed req/res
 app.get("/api/health", (req: Request, res: Response) => {
   res.json({ status: "Backend is running 🚀" });
