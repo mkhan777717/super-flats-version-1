@@ -13,8 +13,10 @@ import {
   ChevronRight,
   X,
   Maximize2,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import { fetchPropertyById } from "@/lib/property-api"; // ✅ use single property API
 
 interface Property {
   id: string;
@@ -39,42 +41,50 @@ interface PropertyGalleryProps {
 }
 
 export function PropertyGallery({ propertyId }: PropertyGalleryProps) {
+  const [property, setProperty] = useState<Property | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showLightbox, setShowLightbox] = useState(false);
   const [currentUrl, setCurrentUrl] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setCurrentUrl(window.location.href);
   }, []);
 
-  // Mock property data
-  const property: Property = {
-    id: propertyId,
-    name: "2BHK Duplex Semi Furnished",
-    location: "BTM Layout, Bangalore",
-    bhk: "2BHK",
-    rent: 25000,
-    deposit: 50000,
-    availability: "Available",
-    images: ["/modern-apartment-living.png", "/luxury-apartment-interior.png"],
-    createdAt: "2024-01-15",
-    description:
-      "Beautiful 2BHK duplex apartment with modern amenities and great connectivity. This property features spacious rooms, modern kitchen, and is located in a prime area with easy access to IT parks, shopping centers, and public transportation. Perfect for working professionals and small families.",
-    amenities: [
-      "Parking",
-      "Security",
-      "Gym",
-      "Swimming Pool",
-      "Power Backup",
-      "Elevator",
-      "Garden",
-      "Club House",
-    ],
-    area: 1200,
-    furnished: "Semi Furnished",
-    parking: true,
-    contact: "+91 9205454717",
-  };
+  // ✅ Fetch property by ID directly
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const prop = await fetchPropertyById(propertyId);
+        setProperty(prop);
+      } catch (err) {
+        console.error("Failed to fetch property", err);
+        setProperty(null);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [propertyId]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="animate-spin" />
+      </div>
+    );
+  }
+
+  if (!property) {
+    return <p className="text-center py-12">Property not found</p>;
+  }
+
+  // ✅ WhatsApp link
+  const whatsappNumber = (property.contact || "").replace(/\D/g, "");
+  const waMessage = `Hi, I'm interested in your property: ${property.name} - ${currentUrl}`;
+  const waLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+    waMessage
+  )}`;
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % property.images.length);
@@ -98,13 +108,6 @@ export function PropertyGallery({ propertyId }: PropertyGalleryProps) {
         return "bg-gray-100 text-gray-800";
     }
   };
-
-  // ✅ Build WhatsApp link properly
-  const whatsappNumber = (property.contact || "").replace(/\D/g, ""); // remove + and spaces
-  const waMessage = `Hi, I'm interested in your property: ${property.name} - ${currentUrl}`;
-  const waLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-    waMessage
-  )}`;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -133,7 +136,6 @@ export function PropertyGallery({ propertyId }: PropertyGalleryProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Image Gallery */}
           <div className="lg:col-span-2 space-y-4">
-            {/* Main Image */}
             <div className="relative">
               <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
                 <img
@@ -144,7 +146,6 @@ export function PropertyGallery({ propertyId }: PropertyGalleryProps) {
                 />
               </div>
 
-              {/* Image Navigation */}
               {property.images.length > 1 && (
                 <>
                   <button
@@ -162,12 +163,10 @@ export function PropertyGallery({ propertyId }: PropertyGalleryProps) {
                 </>
               )}
 
-              {/* Image Counter */}
               <div className="absolute bottom-4 right-4 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm">
                 {currentImageIndex + 1} / {property.images.length}
               </div>
 
-              {/* Fullscreen Button */}
               <button
                 onClick={() => setShowLightbox(true)}
                 className="absolute top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all"
@@ -176,7 +175,6 @@ export function PropertyGallery({ propertyId }: PropertyGalleryProps) {
               </button>
             </div>
 
-            {/* Thumbnails */}
             {property.images.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-2">
                 {property.images.map((image, index) => (
@@ -256,7 +254,6 @@ export function PropertyGallery({ propertyId }: PropertyGalleryProps) {
                     </div>
                   </div>
 
-                  {/* ✅ WhatsApp Button */}
                   {property.contact && (
                     <a
                       href={waLink}
@@ -274,7 +271,6 @@ export function PropertyGallery({ propertyId }: PropertyGalleryProps) {
               </CardContent>
             </Card>
 
-            {/* Amenities */}
             {property.amenities && property.amenities.length > 0 && (
               <Card>
                 <CardContent className="p-6">
@@ -293,7 +289,6 @@ export function PropertyGallery({ propertyId }: PropertyGalleryProps) {
           </div>
         </div>
 
-        {/* Description */}
         {property.description && (
           <Card className="mt-8">
             <CardContent className="p-6">
@@ -317,16 +312,12 @@ export function PropertyGallery({ propertyId }: PropertyGalleryProps) {
               alt={`${property.name} - Image ${currentImageIndex + 1}`}
               className="max-w-full max-h-full object-contain"
             />
-
-            {/* Close */}
             <button
               onClick={() => setShowLightbox(false)}
               className="absolute top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70"
             >
               <X size={20} />
             </button>
-
-            {/* Nav */}
             {property.images.length > 1 && (
               <>
                 <button
@@ -343,8 +334,6 @@ export function PropertyGallery({ propertyId }: PropertyGalleryProps) {
                 </button>
               </>
             )}
-
-            {/* Counter */}
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-4 py-2 rounded-full">
               {currentImageIndex + 1} of {property.images.length}
             </div>

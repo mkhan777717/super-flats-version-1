@@ -5,7 +5,10 @@
       "rootDir": "./",
       "outDir": "./dist",
       "esModuleInterop": true,
-      "strict": true
-    }
+      "strict": true,
+      "types": ["node", "express"]
+    },
+    "include": ["./**/*.ts"],
+    "exclude": ["node_modules", "dist"]
   }
   
