@@ -5,7 +5,8 @@ const dbConfig = {
   port: Number(process.env.DB_PORT || process.env.MYSQL_PORT || 3306),
   user: process.env.DB_USER || process.env.MYSQL_USER || "root",
   password: process.env.DB_PASS || process.env.MYSQL_PASSWORD || "kamlesh12",
-  database: process.env.DB_NAME || process.env.MYSQL_DATABASE || "superflats_temp",
+  database:
+    process.env.DB_NAME || process.env.MYSQL_DATABASE || "superflats_temp",
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -17,11 +18,17 @@ export function getPool() {
   return pool;
 }
 
-async function queryRows<T = any>(sql: string, params: any[] = []): Promise<T[]> {
+async function queryRows<T = any>(
+  sql: string,
+  params: any[] = []
+): Promise<T[]> {
   const [rows] = await getPool().query(sql, params);
   return rows as T[];
 }
-async function queryRow<T = any>(sql: string, params: any[] = []): Promise<T | null> {
+async function queryRow<T = any>(
+  sql: string,
+  params: any[] = []
+): Promise<T | null> {
   const rows = await queryRows<T>(sql, params);
   return (rows as any[])[0] || null;
 }
@@ -42,11 +49,35 @@ export const PropertyDB = {
       GROUP BY p.id
       ORDER BY p.created_at DESC
       LIMIT 200
-    `).then(rows => rows.map((r: any) => ({
-      ...r,
-      images: r.images ? r.images.split(",") : [],
-      amenities: r.amenities ? r.amenities.split(",") : [],
-    })));
+    `).then((rows) =>
+      rows.map((r: any) => ({
+        id: r.id,
+        name: r.title, // DB → frontend
+        location: r.location,
+        bhk: r.bhk_type,
+        rent: r.rent,
+        deposit: r.deposit,
+        availability:
+          r.availability_status === "available"
+            ? "Available"
+            : r.availability_status === "occupied"
+            ? "Rented"
+            : "Maintenance",
+        images: r.images ? r.images.split(",") : [],
+        createdAt: r.created_at,
+        description: r.description,
+        amenities: r.amenities ? r.amenities.split(",") : [],
+        area: r.area,
+        furnished:
+          r.furnished_status === "fully_furnished"
+            ? "Fully Furnished"
+            : r.furnished_status === "semi_furnished"
+            ? "Semi Furnished"
+            : "Unfurnished",
+        parking: !!r.parking,
+        contact: r.contact_phone || "",
+      }))
+    );
   },
 
   async searchProperties(search: string) {
@@ -65,11 +96,35 @@ export const PropertyDB = {
       LIMIT 200
     `,
       [q, q, q]
-    ).then(rows => rows.map((r: any) => ({
-      ...r,
-      images: r.images ? r.images.split(",") : [],
-      amenities: r.amenities ? r.amenities.split(",") : [],
-    })));
+    ).then((rows) =>
+      rows.map((r: any) => ({
+        id: r.id,
+        name: r.title, // DB → frontend
+        location: r.location,
+        bhk: r.bhk_type,
+        rent: r.rent,
+        deposit: r.deposit,
+        availability:
+          r.availability_status === "available"
+            ? "Available"
+            : r.availability_status === "occupied"
+            ? "Rented"
+            : "Maintenance",
+        images: r.images ? r.images.split(",") : [],
+        createdAt: r.created_at,
+        description: r.description,
+        amenities: r.amenities ? r.amenities.split(",") : [],
+        area: r.area,
+        furnished:
+          r.furnished_status === "fully_furnished"
+            ? "Fully Furnished"
+            : r.furnished_status === "semi_furnished"
+            ? "Semi Furnished"
+            : "Unfurnished",
+        parking: !!r.parking,
+        contact: r.contact_phone || "",
+      }))
+    );
   },
 
   async getFilteredProperties({
@@ -80,20 +135,33 @@ export const PropertyDB = {
     location = "",
     bhkTypes = [],
   }: {
-    search?: string; rentMin?: number; rentMax?: number;
-    availability_status?: string; location?: string; bhkTypes?: string[];
+    search?: string;
+    rentMin?: number;
+    rentMax?: number;
+    availability_status?: string;
+    location?: string;
+    bhkTypes?: string[];
   }) {
     const where: string[] = [];
     const params: any[] = [];
 
     if (search) {
-      where.push("(p.title LIKE ? OR p.location LIKE ? OR p.description LIKE ?)");
+      where.push(
+        "(p.title LIKE ? OR p.location LIKE ? OR p.description LIKE ?)"
+      );
       const q = `%${search}%`;
       params.push(q, q, q);
     }
-    where.push("p.rent BETWEEN ? AND ?"); params.push(rentMin, rentMax);
-    if (availability_status) { where.push("p.availability_status = ?"); params.push(availability_status); }
-    if (location) { where.push("p.location = ?"); params.push(location); }
+    where.push("p.rent BETWEEN ? AND ?");
+    params.push(rentMin, rentMax);
+    if (availability_status) {
+      where.push("p.availability_status = ?");
+      params.push(availability_status);
+    }
+    if (location) {
+      where.push("p.location = ?");
+      params.push(location);
+    }
     if (bhkTypes.length) {
       where.push(`p.bhk_type IN (${bhkTypes.map(() => "?").join(",")})`);
       params.push(...bhkTypes);
@@ -113,9 +181,31 @@ export const PropertyDB = {
     `;
     const rows = await queryRows(sql, params);
     return rows.map((r: any) => ({
-      ...r,
+      id: r.id,
+      name: r.title, // map DB → frontend
+      location: r.location,
+      bhk: r.bhk_type,
+      rent: r.rent,
+      deposit: r.deposit,
+      availability:
+        r.availability_status === "available"
+          ? "Available"
+          : r.availability_status === "occupied"
+          ? "Rented"
+          : "Maintenance",
       images: r.images ? r.images.split(",") : [],
+      createdAt: r.created_at,
+      description: r.description,
       amenities: r.amenities ? r.amenities.split(",") : [],
+      area: r.area,
+      furnished:
+        r.furnished_status === "fully_furnished"
+          ? "Fully Furnished"
+          : r.furnished_status === "semi_furnished"
+          ? "Semi Furnished"
+          : "Unfurnished",
+      parking: !!r.parking,
+      contact: r.contact_phone || "", // normalize contact field
     }));
   },
 
@@ -133,20 +223,62 @@ export const PropertyDB = {
       `,
       [id]
     );
-    if (!row) return null as any;
+    if (!row) return null;
+
     return {
-      ...row,
-      images: (row as any).images ? (row as any).images.split(",") : [],
-      amenities: (row as any).amenities ? (row as any).amenities.split(",") : [],
+      id: row.id,
+      name: row.title,
+      location: row.location,
+      bhk: row.bhk_type,
+      rent: row.rent,
+      deposit: row.deposit,
+      availability:
+        row.availability_status === "available"
+          ? "Available"
+          : row.availability_status === "occupied"
+          ? "Rented"
+          : "Maintenance",
+      images: row.images ? row.images.split(",") : [],
+      createdAt: row.created_at,
+      description: row.description,
+      amenities: row.amenities ? row.amenities.split(",") : [],
+      area: row.area,
+      furnished:
+        row.furnished_status === "fully_furnished"
+          ? "Fully Furnished"
+          : row.furnished_status === "semi_furnished"
+          ? "Semi Furnished"
+          : "Unfurnished",
+      parking: !!row.parking,
+      contact: row.contact_phone || "",
     };
   },
 
   async createProperty(data: any) {
     const {
-      title, description, property_type, bhk_type, rent, deposit, location, area,
-      furnished_status, parking, parking_type, floor_number, total_floors, age_of_property,
-      facing, balcony, bathroom, available_from, contact_name, contact_phone, contact_email,
-      images = [], amenities = [],
+      title,
+      description,
+      property_type,
+      bhk_type,
+      rent,
+      deposit,
+      location,
+      area,
+      furnished_status,
+      parking,
+      parking_type,
+      floor_number,
+      total_floors,
+      age_of_property,
+      facing,
+      balcony,
+      bathroom,
+      available_from,
+      contact_name,
+      contact_phone,
+      contact_email,
+      images = [],
+      amenities = [],
     } = data;
 
     // 21 columns -> 21 placeholders
@@ -159,30 +291,76 @@ export const PropertyDB = {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const res = await exec(sql, [
-      title, description, property_type, bhk_type, rent, deposit, location,
-      area, furnished_status, parking, parking_type, floor_number, total_floors,
-      age_of_property, facing, balcony, bathroom, available_from,
-      contact_name, contact_phone, contact_email,
+      title,
+      description,
+      property_type,
+      bhk_type,
+      rent,
+      deposit,
+      location,
+      area,
+      furnished_status,
+      parking,
+      parking_type,
+      floor_number,
+      total_floors,
+      age_of_property,
+      facing,
+      balcony,
+      bathroom,
+      available_from,
+      contact_name,
+      contact_phone,
+      contact_email,
     ]);
     const propertyId = res.insertId;
 
     if (images.length) {
-      const values = images.map((url: string, i: number) => [propertyId, url, i]);
-      await exec("INSERT INTO property_images (property_id, image_url, display_order) VALUES ?", [values]);
+      const values = images.map((url: string, i: number) => [
+        propertyId,
+        url,
+        i,
+      ]);
+      await exec(
+        "INSERT INTO property_images (property_id, image_url, display_order) VALUES ?",
+        [values]
+      );
     }
     if (amenities.length) {
       const values = amenities.map((a: string) => [propertyId, a]);
-      await exec("INSERT INTO property_amenities (property_id, amenity) VALUES ?", [values]);
+      await exec(
+        "INSERT INTO property_amenities (property_id, amenity) VALUES ?",
+        [values]
+      );
     }
     return propertyId;
   },
 
   async updateProperty(id: number, data: any) {
     const {
-      title, description, property_type, bhk_type, rent, deposit, location, area,
-      furnished_status, parking, parking_type, floor_number, total_floors, age_of_property,
-      facing, balcony, bathroom, available_from, contact_name, contact_phone, contact_email,
-      images = [], amenities = [],
+      title,
+      description,
+      property_type,
+      bhk_type,
+      rent,
+      deposit,
+      location,
+      area,
+      furnished_status,
+      parking,
+      parking_type,
+      floor_number,
+      total_floors,
+      age_of_property,
+      facing,
+      balcony,
+      bathroom,
+      available_from,
+      contact_name,
+      contact_phone,
+      contact_email,
+      images = [],
+      amenities = [],
     } = data;
 
     await exec(
@@ -194,9 +372,28 @@ export const PropertyDB = {
       WHERE id=?
       `,
       [
-        title, description, property_type, bhk_type, rent, deposit, location, area,
-        furnished_status, parking, parking_type, floor_number, total_floors, age_of_property,
-        facing, balcony, bathroom, available_from, contact_name, contact_phone, contact_email, id,
+        title,
+        description,
+        property_type,
+        bhk_type,
+        rent,
+        deposit,
+        location,
+        area,
+        furnished_status,
+        parking,
+        parking_type,
+        floor_number,
+        total_floors,
+        age_of_property,
+        facing,
+        balcony,
+        bathroom,
+        available_from,
+        contact_name,
+        contact_phone,
+        contact_email,
+        id,
       ]
     );
 
@@ -205,11 +402,17 @@ export const PropertyDB = {
 
     if (images.length) {
       const values = images.map((url: string, i: number) => [id, url, i]);
-      await exec("INSERT INTO property_images (property_id, image_url, display_order) VALUES ?", [values]);
+      await exec(
+        "INSERT INTO property_images (property_id, image_url, display_order) VALUES ?",
+        [values]
+      );
     }
     if (amenities.length) {
       const values = amenities.map((a: string) => [id, a]);
-      await exec("INSERT INTO property_amenities (property_id, amenity) VALUES ?", [values]);
+      await exec(
+        "INSERT INTO property_amenities (property_id, amenity) VALUES ?",
+        [values]
+      );
     }
     return true;
   },
@@ -223,6 +426,9 @@ export const PropertyDB = {
 export const AdminDB = {
   async validateAdmin(email: string, password: string) {
     // If passwords are hashed, replace this with bcrypt compare.
-    return queryRow("SELECT * FROM admin_users WHERE email = ? AND password = ?", [email, password]);
+    return queryRow(
+      "SELECT * FROM admin_users WHERE email = ? AND password = ?",
+      [email, password]
+    );
   },
 };

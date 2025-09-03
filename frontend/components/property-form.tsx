@@ -1,75 +1,61 @@
-"use client";
+"use client"
 
-import type React from "react";
+import type React from "react"
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
-import { ImageUpload } from "@/components/image-upload";
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { X } from "lucide-react"
+import { ImageUpload } from "@/components/image-upload"
 
 interface Property {
-  id: string;
-  name: string;
-  location: string;
-  bhk: string;
-  rent: number;
-  deposit: number;
-  availability: "Available" | "Rented" | "Maintenance";
-  images: string[];
-  createdAt: string;
-  description?: string;
-  amenities?: string[];
-  area?: number;
-  furnished?: "Fully Furnished" | "Semi Furnished" | "Unfurnished";
-  parking?: boolean;
-  contact?: string;
+  id: string
+  name: string
+  location: string
+  bhk: string
+  rent: number
+  deposit: number
+  availability: "Available" | "Rented" | "Maintenance"
+  images: string[]
+  createdAt: string
+  description?: string
+  amenities?: string[]
+  area?: number
+  furnished?: "Fully Furnished" | "Semi Furnished" | "Unfurnished"
+  parking?: boolean
+  contact?: string
 }
 
 interface PropertyFormProps {
-  property?: Property;
-  onSubmit: (property: Omit<Property, "id" | "createdAt">) => void;
-  onCancel: () => void;
-  title: string;
+  property?: Property
+  onSubmit: (property: Omit<Property, "id" | "createdAt">) => void
+  onCancel: () => void
+  title: string
 }
 
-export function PropertyForm({
-  property,
-  onSubmit,
-  onCancel,
-  title,
-}: PropertyFormProps) {
+export function PropertyForm({ property, onSubmit, onCancel, title }: PropertyFormProps) {
   const [formData, setFormData] = useState({
     name: "",
     location: "",
     bhk: "",
     rent: 0,
     deposit: 0,
-    availability: "Available" as "Available" | "Rented" | "Maintenance", // ✅
+    availability: "Available" as const,
     images: [] as string[],
     description: "",
     amenities: [] as string[],
     area: 0,
-    furnished: "Unfurnished" as
-      | "Fully Furnished"
-      | "Semi Furnished"
-      | "Unfurnished", // ✅
+    furnished: "Unfurnished" as const,
     parking: false,
     contact: "",
-  });
+  })
 
-  const [newAmenity, setNewAmenity] = useState("");
+  const [newAmenity, setNewAmenity] = useState("")
 
   useEffect(() => {
     if (property) {
@@ -87,31 +73,31 @@ export function PropertyForm({
         furnished: property.furnished || "Unfurnished",
         parking: property.parking || false,
         contact: property.contact || "",
-      });
+      })
     }
-  }, [property]);
+  }, [property])
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
+    e.preventDefault()
+    onSubmit(formData)
+  }
 
   const addAmenity = () => {
     if (newAmenity.trim() && !formData.amenities.includes(newAmenity.trim())) {
       setFormData((prev) => ({
         ...prev,
         amenities: [...prev.amenities, newAmenity.trim()],
-      }));
-      setNewAmenity("");
+      }))
+      setNewAmenity("")
     }
-  };
+  }
 
   const removeAmenity = (amenity: string) => {
     setFormData((prev) => ({
       ...prev,
       amenities: prev.amenities.filter((a) => a !== amenity),
-    }));
-  };
+    }))
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -135,12 +121,7 @@ export function PropertyForm({
                     <Input
                       id="name"
                       value={formData.name}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          name: e.target.value,
-                        }))
-                      }
+                      onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                       placeholder="e.g., 2BHK Duplex Semi Furnished"
                       required
                     />
@@ -151,12 +132,7 @@ export function PropertyForm({
                     <Input
                       id="location"
                       value={formData.location}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          location: e.target.value,
-                        }))
-                      }
+                      onChange={(e) => setFormData((prev) => ({ ...prev, location: e.target.value }))}
                       placeholder="e.g., BTM Layout, Bangalore"
                       required
                     />
@@ -166,9 +142,7 @@ export function PropertyForm({
                     <Label htmlFor="bhk">Property Type</Label>
                     <Select
                       value={formData.bhk}
-                      onValueChange={(value) =>
-                        setFormData((prev) => ({ ...prev, bhk: value }))
-                      }
+                      onValueChange={(value) => setFormData((prev) => ({ ...prev, bhk: value }))}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select BHK type" />
@@ -189,12 +163,7 @@ export function PropertyForm({
                       id="area"
                       type="number"
                       value={formData.area}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          area: Number.parseInt(e.target.value) || 0,
-                        }))
-                      }
+                      onChange={(e) => setFormData((prev) => ({ ...prev, area: Number.parseInt(e.target.value) || 0 }))}
                       placeholder="1200"
                     />
                   </div>
@@ -210,12 +179,7 @@ export function PropertyForm({
                       id="rent"
                       type="number"
                       value={formData.rent}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          rent: Number.parseInt(e.target.value) || 0,
-                        }))
-                      }
+                      onChange={(e) => setFormData((prev) => ({ ...prev, rent: Number.parseInt(e.target.value) || 0 }))}
                       placeholder="25000"
                       required
                     />
@@ -228,10 +192,7 @@ export function PropertyForm({
                       type="number"
                       value={formData.deposit}
                       onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          deposit: Number.parseInt(e.target.value) || 0,
-                        }))
+                        setFormData((prev) => ({ ...prev, deposit: Number.parseInt(e.target.value) || 0 }))
                       }
                       placeholder="50000"
                       required
@@ -242,20 +203,14 @@ export function PropertyForm({
                     <Label htmlFor="furnished">Furnished Status</Label>
                     <Select
                       value={formData.furnished}
-                      onValueChange={(value: any) =>
-                        setFormData((prev) => ({ ...prev, furnished: value }))
-                      }
+                      onValueChange={(value: any) => setFormData((prev) => ({ ...prev, furnished: value }))}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select furnished status" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Fully Furnished">
-                          Fully Furnished
-                        </SelectItem>
-                        <SelectItem value="Semi Furnished">
-                          Semi Furnished
-                        </SelectItem>
+                        <SelectItem value="Fully Furnished">Fully Furnished</SelectItem>
+                        <SelectItem value="Semi Furnished">Semi Furnished</SelectItem>
                         <SelectItem value="Unfurnished">Unfurnished</SelectItem>
                       </SelectContent>
                     </Select>
@@ -265,12 +220,7 @@ export function PropertyForm({
                     <Label htmlFor="availability">Availability Status</Label>
                     <Select
                       value={formData.availability}
-                      onValueChange={(value: any) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          availability: value,
-                        }))
-                      }
+                      onValueChange={(value: any) => setFormData((prev) => ({ ...prev, availability: value }))}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select availability" />
@@ -291,12 +241,7 @@ export function PropertyForm({
                 <Textarea
                   id="description"
                   value={formData.description}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                   placeholder="Describe the property features, location benefits, etc."
                   rows={3}
                 />
@@ -308,12 +253,7 @@ export function PropertyForm({
                 <Input
                   id="contact"
                   value={formData.contact}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      contact: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, contact: e.target.value }))}
                   placeholder="+91 9876543210"
                 />
               </div>
@@ -326,9 +266,7 @@ export function PropertyForm({
                     value={newAmenity}
                     onChange={(e) => setNewAmenity(e.target.value)}
                     placeholder="Add amenity (e.g., Parking, Gym)"
-                    onKeyPress={(e) =>
-                      e.key === "Enter" && (e.preventDefault(), addAmenity())
-                    }
+                    onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addAmenity())}
                   />
                   <Button type="button" onClick={addAmenity} variant="outline">
                     Add
@@ -336,17 +274,9 @@ export function PropertyForm({
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {formData.amenities.map((amenity) => (
-                    <Badge
-                      key={amenity}
-                      variant="secondary"
-                      className="flex items-center gap-1"
-                    >
+                    <Badge key={amenity} variant="secondary" className="flex items-center gap-1">
                       {amenity}
-                      <button
-                        type="button"
-                        onClick={() => removeAmenity(amenity)}
-                        className="ml-1 hover:text-red-600"
-                      >
+                      <button type="button" onClick={() => removeAmenity(amenity)} className="ml-1 hover:text-red-600">
                         <X size={12} />
                       </button>
                     </Badge>
@@ -360,12 +290,7 @@ export function PropertyForm({
                   type="checkbox"
                   id="parking"
                   checked={formData.parking}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      parking: e.target.checked,
-                    }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, parking: e.target.checked }))}
                   className="rounded"
                 />
                 <Label htmlFor="parking">Parking Available</Label>
@@ -375,9 +300,7 @@ export function PropertyForm({
                 <Label className="text-lg font-semibold">Property Images</Label>
                 <ImageUpload
                   images={formData.images}
-                  onImagesChange={(images) =>
-                    setFormData((prev) => ({ ...prev, images }))
-                  }
+                  onImagesChange={(images) => setFormData((prev) => ({ ...prev, images }))}
                   maxFiles={15}
                   maxSizePerFile={10}
                 />
@@ -397,5 +320,5 @@ export function PropertyForm({
         </Card>
       </div>
     </div>
-  );
+  )
 }

@@ -1,10 +1,10 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
 import { AdminDB } from "./mysql";
 
 const router = Router();
 
 // POST /api/admin/login
-router.post("/login", async (req: Request, res: Response) => {
+router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {

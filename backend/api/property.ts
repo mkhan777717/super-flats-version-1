@@ -1,32 +1,13 @@
+// backend/api/properties.ts
 import { Router } from "express";
 import { PropertyDB } from "./mysql";
 
 const router = Router();
 
-// ✅ GET all properties with optional filters
+// GET all properties
 router.get("/", async (req, res) => {
   try {
-    const {
-      search,
-      location,
-      bhk_type,
-      rent_min,
-      rent_max,
-      availability_status,
-    } = req.query;
-
-    // Build filters object
-    const filters = {
-      search: search ? String(search) : "",
-      location: location ? String(location) : "",
-      bhkTypes: bhk_type ? JSON.parse(bhk_type as string) : [],
-      rentMin: rent_min ? Number(rent_min) : 0,
-      rentMax: rent_max ? Number(rent_max) : 999999999,
-      availability_status: availability_status ? String(availability_status) : "",
-    };
-
-    // ✅ Use DB query
-    const properties = await PropertyDB.getFilteredProperties(filters);
+    const properties = await PropertyDB.getAllProperties();
     res.json(properties);
   } catch (err) {
     console.error("Error fetching properties:", err);
@@ -34,7 +15,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ GET property by ID
+// GET property by ID
 router.get("/:id", async (req, res) => {
   try {
     const property = await PropertyDB.getPropertyById(Number(req.params.id));
@@ -46,7 +27,18 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// ✅ POST filter (advanced)
+// Search properties
+router.get("/search/:term", async (req, res) => {
+  try {
+    const results = await PropertyDB.searchProperties(req.params.term);
+    res.json(results);
+  } catch (err) {
+    console.error("Error searching properties:", err);
+    res.status(500).json({ error: "Failed to search properties" });
+  }
+});
+
+// Filtered properties
 router.post("/filter", async (req, res) => {
   try {
     const results = await PropertyDB.getFilteredProperties(req.body);

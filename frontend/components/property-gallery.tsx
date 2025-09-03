@@ -13,10 +13,8 @@ import {
   ChevronRight,
   X,
   Maximize2,
-  Loader2,
 } from "lucide-react";
 import Link from "next/link";
-import { fetchPropertyById } from "@/lib/property-api"; // ✅ use single property API
 
 interface Property {
   id: string;
@@ -42,55 +40,37 @@ interface PropertyGalleryProps {
 
 export function PropertyGallery({ propertyId }: PropertyGalleryProps) {
   const [property, setProperty] = useState<Property | null>(null);
+  const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showLightbox, setShowLightbox] = useState(false);
-  const [currentUrl, setCurrentUrl] = useState("");
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setCurrentUrl(window.location.href);
-  }, []);
-
-  // ✅ Fetch property by ID directly
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
+    async function fetchProperty() {
       try {
-        const prop = await fetchPropertyById(propertyId);
-        setProperty(prop);
+        // 🔗 Update API base URL if needed
+        const res = await fetch(
+          `http://localhost:5000/api/property/${propertyId}`
+        );
+        if (!res.ok) throw new Error("Failed to fetch property");
+        const data = await res.json();
+        setProperty(data);
       } catch (err) {
-        console.error("Failed to fetch property", err);
-        setProperty(null);
+        console.error("Error fetching property:", err);
       } finally {
         setLoading(false);
       }
-    })();
+    }
+
+    if (propertyId) fetchProperty();
   }, [propertyId]);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="animate-spin" />
-      </div>
-    );
-  }
-
-  if (!property) {
-    return <p className="text-center py-12">Property not found</p>;
-  }
-
-  // ✅ WhatsApp link
-  const whatsappNumber = (property.contact || "").replace(/\D/g, "");
-  const waMessage = `Hi, I'm interested in your property: ${property.name} - ${currentUrl}`;
-  const waLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-    waMessage
-  )}`;
-
   const nextImage = () => {
+    if (!property) return;
     setCurrentImageIndex((prev) => (prev + 1) % property.images.length);
   };
 
   const prevImage = () => {
+    if (!property) return;
     setCurrentImageIndex(
       (prev) => (prev - 1 + property.images.length) % property.images.length
     );
@@ -108,6 +88,21 @@ export function PropertyGallery({ propertyId }: PropertyGalleryProps) {
         return "bg-gray-100 text-gray-800";
     }
   };
+
+  if (loading) {
+    return <p className="text-center mt-10">Loading property...</p>;
+  }
+
+  if (!property) {
+    return <p className="text-center mt-10">Property not found</p>;
+  }
+
+  // ✅ Build WhatsApp link
+  const whatsappNumber = (property.contact || "").replace(/\D/g, "");
+  const waMessage = `Hi, I'm interested in your property: ${property.name}`;
+  const waLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+    waMessage
+  )}`;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -131,7 +126,7 @@ export function PropertyGallery({ propertyId }: PropertyGalleryProps) {
         </div>
       </header>
 
-      {/* Property Gallery */}
+      {/* Property Details */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Image Gallery */}
@@ -146,77 +141,56 @@ export function PropertyGallery({ propertyId }: PropertyGalleryProps) {
                 />
               </div>
 
+              {/* Navigation */}
               {property.images.length > 1 && (
                 <>
                   <button
                     onClick={prevImage}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all"
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full"
                   >
                     <ChevronLeft size={20} />
                   </button>
                   <button
                     onClick={nextImage}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full"
                   >
                     <ChevronRight size={20} />
                   </button>
                 </>
               )}
 
+              {/* Counter */}
               <div className="absolute bottom-4 right-4 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm">
                 {currentImageIndex + 1} / {property.images.length}
               </div>
 
+              {/* Fullscreen */}
               <button
                 onClick={() => setShowLightbox(true)}
-                className="absolute top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all"
+                className="absolute top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded-full"
               >
                 <Maximize2 size={16} />
               </button>
             </div>
-
-            {property.images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                {property.images.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentImageIndex(index)}
-                    className={`flex-shrink-0 w-20 h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                      index === currentImageIndex
-                        ? "border-blue-500"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                  >
-                    <img
-                      src={image || "/placeholder.svg"}
-                      alt={`Thumbnail ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
-          {/* Property Details */}
+          {/* Right Section */}
           <div className="space-y-6">
             <Card>
               <CardContent className="p-6">
                 <div className="space-y-4">
-                  <div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                      {property.name}
-                    </h1>
-                    <div className="flex items-center text-gray-600 mb-3">
-                      <MapPin size={16} className="mr-2" />
-                      {property.location}
-                    </div>
-                    <Badge
-                      className={getAvailabilityColor(property.availability)}
-                    >
-                      {property.availability}
-                    </Badge>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    {property.name}
+                  </h1>
+                  <div className="flex items-center text-gray-600">
+                    <MapPin size={16} className="mr-2" />
+                    {property.location}
                   </div>
+                  <Badge
+                    className={getAvailabilityColor(property.availability)}
+                  >
+                    {property.availability}
+                  </Badge>
 
                   <div className="grid grid-cols-2 gap-4 py-4 border-y">
                     <div>
@@ -239,28 +213,22 @@ export function PropertyGallery({ propertyId }: PropertyGalleryProps) {
                     </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Monthly Rent</span>
-                      <span className="text-2xl font-bold text-gray-900">
-                        ₹{property.rent.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Security Deposit</span>
-                      <span className="text-lg font-semibold text-gray-700">
-                        ₹{property.deposit.toLocaleString()}
-                      </span>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Monthly Rent</span>
+                    <span className="text-2xl font-bold text-gray-900">
+                      ₹{property.rent.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Security Deposit</span>
+                    <span className="text-lg font-semibold text-gray-700">
+                      ₹{property.deposit.toLocaleString()}
+                    </span>
                   </div>
 
+                  {/* WhatsApp Button */}
                   {property.contact && (
-                    <a
-                      href={waLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full"
-                    >
+                    <a href={waLink} target="_blank" rel="noopener noreferrer">
                       <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
                         <Phone size={16} className="mr-2" />
                         WhatsApp: {property.contact}
@@ -271,15 +239,16 @@ export function PropertyGallery({ propertyId }: PropertyGalleryProps) {
               </CardContent>
             </Card>
 
+            {/* Amenities */}
             {property.amenities && property.amenities.length > 0 && (
               <Card>
                 <CardContent className="p-6">
                   <h3 className="text-lg font-semibold mb-4">Amenities</h3>
                   <div className="grid grid-cols-2 gap-2">
-                    {property.amenities.map((amenity) => (
-                      <div key={amenity} className="flex items-center gap-2">
+                    {property.amenities.map((a) => (
+                      <div key={a} className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm text-gray-700">{amenity}</span>
+                        <span className="text-sm text-gray-700">{a}</span>
                       </div>
                     ))}
                   </div>
@@ -289,6 +258,7 @@ export function PropertyGallery({ propertyId }: PropertyGalleryProps) {
           </div>
         </div>
 
+        {/* Description */}
         {property.description && (
           <Card className="mt-8">
             <CardContent className="p-6">
@@ -314,29 +284,10 @@ export function PropertyGallery({ propertyId }: PropertyGalleryProps) {
             />
             <button
               onClick={() => setShowLightbox(false)}
-              className="absolute top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70"
+              className="absolute top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded-full"
             >
               <X size={20} />
             </button>
-            {property.images.length > 1 && (
-              <>
-                <button
-                  onClick={prevImage}
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70"
-                >
-                  <ChevronLeft size={24} />
-                </button>
-                <button
-                  onClick={nextImage}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70"
-                >
-                  <ChevronRight size={24} />
-                </button>
-              </>
-            )}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-4 py-2 rounded-full">
-              {currentImageIndex + 1} of {property.images.length}
-            </div>
           </div>
         </div>
       )}
