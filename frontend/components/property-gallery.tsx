@@ -43,14 +43,15 @@ export function PropertyGallery({ propertyId }: PropertyGalleryProps) {
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showLightbox, setShowLightbox] = useState(false);
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
 
   useEffect(() => {
     async function fetchProperty() {
       try {
         // 🔗 Update API base URL if needed
-        const res = await fetch(
-          `http://localhost:5000/api/property/${propertyId}`
-        );
+        const res = await fetch(`${API_BASE}/property/${propertyId}`, {
+          cache: "no-store", // avoid stale data
+        });
         if (!res.ok) throw new Error("Failed to fetch property");
         const data = await res.json();
         setProperty(data);
